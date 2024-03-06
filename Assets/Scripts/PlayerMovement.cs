@@ -20,10 +20,13 @@ public class PlayerMovement : MonoBehaviour
 
     public int collectiblesCount = 0;
     public TextMeshProUGUI collectiblesText;
+
+	private PlayerBoundaryChecker boundaryChecker;
     
     void Start()
     {
         rb = GetComponent<Rigidbody>();
+		boundaryChecker = GetComponent<PlayerBoundaryChecker>();
     }
     
     void Update()
@@ -49,6 +52,7 @@ public class PlayerMovement : MonoBehaviour
             isGrounded = true;
             platformCount++;
             scoreText.text = "Score: " + platformCount;
+			UpdateScoreAndCollectibles();
         }
     }
     
@@ -66,6 +70,16 @@ public class PlayerMovement : MonoBehaviour
         if (collectiblesText != null)
         {
             collectiblesText.text = "Collectibles: " + collectiblesCount;
+			UpdateScoreAndCollectibles();
         }
     }
+
+	private void UpdateScoreAndCollectibles()
+	{
+    	if (boundaryChecker != null)
+    	{
+	        boundaryChecker.playerScore = platformCount;
+        	boundaryChecker.playerCollectibles = collectiblesCount;
+    	}
+	}
 }

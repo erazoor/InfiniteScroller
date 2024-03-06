@@ -1,74 +1,68 @@
-using UnityEngine;
+using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using UnityEngine.UI;
+using UnityEngine;
 using TMPro;
+using UnityEngine.SceneManagement;
+using System.Linq;
+using System.IO;
+
+[System.Serializable]
+public class LeaderboardData
+{
+    public List<LeaderboardEntry> entries = new List<LeaderboardEntry>();
+}
+
+[System.Serializable]
+public class LeaderboardEntry
+{
+    public int score;
+    public int collectibles;
+
+    public LeaderboardEntry(int newScore, int newCollectibles)
+    {
+        score = newScore;
+        collectibles = newCollectibles;
+    }
+}
 
 public class LeaderboardManager : MonoBehaviour
 {
-    public static LeaderboardManager Instance;
-    private List<LeaderboardEntry> leaderboardEntries = new List<LeaderboardEntry>();
-    
-    void Awake()
-    {
-        if (Instance == null)
-        {
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
-            LoadLeaderboard();
-        }
-        else if (Instance != this)
-        {
-            Destroy(gameObject);
-        }
-    }
-
-    void Start()
-    {
-        UpdateLeaderboardUI();
-    }
-    
-    public void AddEntry(int score, int collectibles)
-    {
-        leaderboardEntries.Add(new LeaderboardEntry(score, collectibles));
-        SortAndLimitEntries();
-        SaveLeaderboard();
-    }
-    
-    private void SortAndLimitEntries()
-    {
-        leaderboardEntries = leaderboardEntries.OrderByDescending(entry => entry.score)
-            .ThenByDescending(entry => entry.collectibles)
-            .Take(5)
-            .ToList();
-    }
-
-    void LoadLeaderboard()
-    {
-        leaderboardEntries.Clear();
-        for (int i = 0; i < 5; i++)
-        {
-            if (PlayerPrefs.HasKey($"Score{i}") && PlayerPrefs.HasKey($"Collectibles{i}"))
-            {
-                leaderboardEntries.Add(new LeaderboardEntry(PlayerPrefs.GetInt($"Score{i}"), PlayerPrefs.GetInt($"Collectibles{i}")));
-            }
-        }
-    }
-
-    public void SaveLeaderboard()
-    {
-        for (int i = 0; i < leaderboardEntries.Count; i++)
-        {
-            PlayerPrefs.SetInt($"Score{i}", leaderboardEntries[i].score);
-            PlayerPrefs.SetInt($"Collectibles{i}", leaderboardEntries[i].collectibles);
-        }
-        PlayerPrefs.Save();
-    }
-    
+	private List<LeaderboardEntry> leaderboardEntries = new List<LeaderboardEntry>();
     public TextMeshProUGUI[] scoreTexts;
     public TextMeshProUGUI[] collectibleTexts;
-    
-    public void UpdateLeaderboardUI()
+
+	void Awake()
+    {
+        SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+
+    void OnDisable()
+    {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
+
+    void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        if (scene.name == "HUD")
+        {
+            LoadLeaderboardFromJSON();
+            UpdateLeaderboardUI();
+        }
+    }
+
+	public void LoadLeaderboardFromJSON()
+    {
+        string path = Application.persistentDataPath + "/leaderboard.json";
+        if (File.Exists(path))
+        {
+            string json = File.ReadAllText(path);
+            LeaderboardData data = JsonUtility.FromJson<LeaderboardData>(json);
+            leaderboardEntries = data.entries.OrderByDescending(entry => entry.score).ThenByDescending(entry => entry.collectibles).ToList();
+            UpdateLeaderboardUI();
+        }
+    }
+
+	public void UpdateLeaderboardUI()
     {
         for (int i = 0; i < scoreTexts.Length; i++)
         {
@@ -83,12 +77,5 @@ public class LeaderboardManager : MonoBehaviour
                 collectibleTexts[i].text = "";
             }
         }
-    }
-    
-    public void ResetUIReferences(TextMeshProUGUI[] newScoreTexts, TextMeshProUGUI[] newCollectibleTexts)
-    {
-        scoreTexts = newScoreTexts;
-        collectibleTexts = newCollectibleTexts;
-        UpdateLeaderboardUI();
     }
 }

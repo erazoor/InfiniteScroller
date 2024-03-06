@@ -5,10 +5,9 @@ using UnityEngine.SceneManagement;
 
 public class PlayerBoundaryChecker : MonoBehaviour
 {
-    public float leftLimit = -25f;
+    public float leftLimit = -15f;
     public float bottomLimit = -5f;
     
-    public LeaderboardManager leaderboardManager;
     public int playerScore;
     public int playerCollectibles;
     void Start()
@@ -24,6 +23,17 @@ public class PlayerBoundaryChecker : MonoBehaviour
             DestroyPlayer();
         }
     }
+
+	public void UpdateScore(int newScore)
+	{
+	    playerScore = newScore;
+
+    	PlayerBoundaryChecker boundaryChecker = GetComponent<PlayerBoundaryChecker>();
+    	if (boundaryChecker != null)
+	    {
+        	boundaryChecker.playerScore = newScore;
+    	}
+	}
 
     void DestroyPlayer()
     {
