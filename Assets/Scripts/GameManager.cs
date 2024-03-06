@@ -56,28 +56,34 @@ public class GameManager : MonoBehaviour
     private IEnumerator AssignUIReferencesAfterSceneLoad(int finalScore, int finalCollectibles)
     {
         yield return new WaitUntil(() => SceneManager.GetActiveScene().name == "HUD");
+        yield return new WaitForSeconds(0.1f); 
+        
+        GameObject leaderboardPanel = GameObject.Find("LeaderboardManager");
     
-        GameObject leaderboardPanel = GameObject.Find("Leaderboard");
-
+        TextMeshProUGUI[] scoreTexts = FindObjectsOfType<TextMeshProUGUI>().Where(t => t.tag == "ScoreText").ToArray();
+        TextMeshProUGUI[] collectibleTexts = FindObjectsOfType<TextMeshProUGUI>().Where(t => t.tag == "CollectibleText").ToArray();
+        
         if (leaderboardPanel != null)
         {
-            TextMeshProUGUI[] scoreTexts = leaderboardPanel.GetComponentsInChildren<TextMeshProUGUI>()
-                .Where(text => text.gameObject.tag == "ScoreText").ToArray();
-            TextMeshProUGUI[] collectibleTexts = leaderboardPanel.GetComponentsInChildren<TextMeshProUGUI>()
-                .Where(text => text.gameObject.tag == "CollectibleText").ToArray();
+            TextMeshProUGUI[] newScoreTexts = leaderboardPanel.GetComponentsInChildren<TextMeshProUGUI>()
+                .Where(text => text.tag == "ScoreText").ToArray();
+            TextMeshProUGUI[] newCollectibleTexts = leaderboardPanel.GetComponentsInChildren<TextMeshProUGUI>()
+                .Where(text => text.tag == "CollectibleText").ToArray();
 
-            LeaderboardManager lbManager = LeaderboardManager.Instance;
-
-            if (lbManager != null)
+            if (LeaderboardManager.Instance != null)
             {
-                lbManager.ResetUIReferences(scoreTexts, collectibleTexts);
-                lbManager.AddEntry(finalScore, finalCollectibles);
-                lbManager.UpdateLeaderboardUI();
+                LeaderboardManager.Instance.ResetUIReferences(newScoreTexts, newCollectibleTexts);
+                LeaderboardManager.Instance.AddEntry(finalScore, finalCollectibles);
+                LeaderboardManager.Instance.UpdateLeaderboardUI();
             }
             else
             {
                 Debug.LogError("Leaderboard Manager not found");
             }
+        }
+        else
+        {
+            Debug.LogError("Leaderboard Panel not found"); 
         }
     }
 }
